@@ -106,7 +106,7 @@ Today is **Monday, September 21, 2026**. There are **39 days** to the deadline.
 
 | Phase | Dates | Theme | Hard exit |
 | --- | --- | --- | --- |
-| **0 — Foundations** | Sep 21 – Sep 27 | Accounts, repo skeleton, Token Factory hello-world | Cloud calls work from this repo |
+| **0 — Foundations** | Sep 21 – Sep 27 | Accounts, repo skeleton, Token Factory hello-world | Client is in-repo; live key still needed |
 | **1 — First metal** | Sep 28 – Oct 4 | Hardware + one recorded skill, even if ugly | ≥60 s of the real arm moving on camera |
 | **2 — Data factory** | Oct 5 – Oct 11 | Cosmos SDG + Isaac eval on Jobs/Workbench | 1 demo → N variants → eval artifact |
 | **3 — Policy** | Oct 12 – Oct 18 | GR00T post-train + deploy | Policy runs the skill in sim and at least once on metal |
@@ -135,8 +135,8 @@ Today is **Monday, September 21, 2026**. There are **39 days** to the deadline.
 
 ### 5.2 Hardware order (do not delay)
 
-- [ ] Order **SO-101 leader + follower pair** plus two cameras (front + wrist). Seeed / WowRobo assembled kits are preferred over DIY if shipping time is tight
-- [ ] Confirm delivery ETA. If ETA is after October 4, start fallback hardware sourcing the same day (§8)
+- [x] Printed SO-101 frames and STS3215 motors in hand (2026-09-21)
+- [ ] Confirm **leader + follower** prints, two bus adapters, correct voltage PSUs, and two cameras
 - [ ] Reserve a fixed table, clamps, two bowls/bins, and a small set of demo objects (distinct colors)
 
 ### 5.3 Repository skeleton
@@ -166,15 +166,15 @@ apprentice/
   tests/
 ```
 
-- [ ] OSI license file at repo root so GitHub detects it
-- [ ] `.env.example` with `NEBIUS_API_KEY`, `TAVILY_API_KEY`, model IDs, no secrets
-- [ ] Python package installable with `uv` or `pip install -e .`
+- [x] OSI license file at repo root so GitHub detects it
+- [x] `.env.example` with `NEBIUS_API_KEY`, `TAVILY_API_KEY`, model IDs, no secrets
+- [x] Python package installable with `pip install -e .`
 
 ### 5.4 Hello-world inference (compliance starts here)
 
-- [ ] `scripts/hello_token_factory.py` — Nemotron Nano or Lightning chat completion via `https://api.tokenfactory.nebius.com/v1/`
-- [ ] `scripts/hello_cosmos_reasoner.py` — send one local image to `nvidia/Cosmos3-Super-Reasoner`; print a structured scene description
-- [ ] Log model IDs, region, and request IDs in `docs/HACKATHON.md` so the README can cite real call sites later
+- [x] `scripts/hello_token_factory.py` — Nemotron Nano chat completion via Token Factory (`apprentice hello-nemotron`)
+- [x] `scripts/hello_cosmos_reasoner.py` — Cosmos Reasoner on an image (`apprentice hello-reasoner`)
+- [ ] Log **live** model IDs, region, and request IDs in `docs/HACKATHON.md` after the first real API key is used
 
 **Pinned model IDs (change only with a roadmap note):**
 
@@ -202,15 +202,15 @@ Define the JSON object that later phases pass around:
 }
 ```
 
-- [ ] Pydantic (or equivalent) schema + unit tests for parse/validate
-- [ ] Nemotron prompt that drafts a spec from a text description of a demo (image optional)
+- [x] Pydantic schema + unit tests for parse/validate
+- [x] Nemotron prompt that drafts a spec from a text description of a demo (`apprentice compile-skill`)
 
 ### Phase 0 exit criteria
 
 1. Token Factory Nemotron call succeeds from CI or a documented local command.
 2. Token Factory Cosmos Reasoner call succeeds on a still image.
 3. License + `.env.example` + package layout exist.
-4. SO-101 is ordered **or** fallback hardware is identified with a ship date.
+4. SO-101 frames and motors are in hand; bus adapters/cameras still to confirm.
 
 ---
 
@@ -220,10 +220,12 @@ Define the JSON object that later phases pass around:
 
 ### 6.1 Bring-up
 
-- [ ] Assemble / unbox, flash/configure Feetech bus, calibrate leader and follower per LeRobot SO-101 docs
+- [x] Bring-up CLI + [docs/HARDWARE.md](docs/HARDWARE.md) (ID assignment **before** daisy-chain)
+- [ ] Run `apprentice robot setup-motors` on each arm (one motor on the bus at a time)
+- [ ] Assemble / calibrate leader and follower
 - [ ] Confirm camera indices (front, wrist), 640×480 @ 30 fps as a baseline
 - [ ] Safety: e-stop or unplug path, workspace walls, no people in the sweep volume during policy runs
-- [ ] Record calibration notes in `docs/HARDWARE.md` (ports, IDs, camera indices)
+- [ ] Record **this machine's** ports, IDs, camera indices in `docs/HARDWARE.md`
 
 ### 6.2 Data collection
 
@@ -234,8 +236,8 @@ Define the JSON object that later phases pass around:
 
 ### 6.3 Scripted baseline (honesty check)
 
-- [ ] A non-learning replay or simple scripted motion that can place an object when the scene is identical to the demo
-- [ ] This exists so later GR00T results have a baseline, and so the 60-second video is not blocked on training
+- [x] Waypoint replay (`apprentice robot replay`) that refuses the all-zero example
+- [ ] Capture real poses into `configs/skill1_waypoints.json` and run replay on metal
 
 ### 6.4 Capture the judging clip early
 

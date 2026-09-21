@@ -1,0 +1,30 @@
+# Secrets and local hardware
+.env
+configs/hardware.yaml
+configs/skill1_waypoints.json
+
+# Robot data and calibration
+data/
+*.mp4
+*.mkv
+.cache/
+calibration/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
