@@ -1,0 +1,71 @@
+{
+  "instruction": "put the block in the blue bowl",
+  "fps": 30,
+  "waypoints": [
+    {
+      "name": "home",
+      "hold_s": 1.0,
+      "gripper": 50.0,
+      "joints": {
+        "shoulder_pan": 0.0,
+        "shoulder_lift": 0.0,
+        "elbow_flex": 0.0,
+        "wrist_flex": 0.0,
+        "wrist_roll": 0.0,
+        "gripper": 0.0
+      }
+    },
+    {
+      "name": "hover_object",
+      "hold_s": 1.0,
+      "gripper": 50.0,
+      "joints": {
+        "shoulder_pan": 0.0,
+        "shoulder_lift": 0.0,
+        "elbow_flex": 0.0,
+        "wrist_flex": 0.0,
+        "wrist_roll": 0.0,
+        "gripper": 0.0
+      }
+    },
+    {
+      "name": "grasp",
+      "hold_s": 0.6,
+      "gripper": 10.0,
+      "joints": {
+        "shoulder_pan": 0.0,
+        "shoulder_lift": 0.0,
+        "elbow_flex": 0.0,
+        "wrist_flex": 0.0,
+        "wrist_roll": 0.0,
+        "gripper": 0.0
+      }
+    },
+    {
+      "name": "hover_bowl",
+      "hold_s": 1.0,
+      "gripper": 10.0,
+      "joints": {
+        "shoulder_pan": 0.0,
+        "shoulder_lift": 0.0,
+        "elbow_flex": 0.0,
+        "wrist_flex": 0.0,
+        "wrist_roll": 0.0,
+        "gripper": 0.0
+      }
+    },
+    {
+      "name": "release",
+      "hold_s": 0.6,
+      "gripper": 80.0,
+      "joints": {
+        "shoulder_pan": 0.0,
+        "shoulder_lift": 0.0,
+        "elbow_flex": 0.0,
+        "wrist_flex": 0.0,
+        "wrist_roll": 0.0,
+        "gripper": 0.0
+      }
+    }
+  ]
+}
