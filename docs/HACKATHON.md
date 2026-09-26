@@ -20,4 +20,4 @@ After a successful live call, replace `_pending first live key_` with the respon
 
 ## Hardware
 
-Printed SO-101 parts and STS3215 motors are in hand as of 2026-09-21. Bus adapters, cameras, and first calibration still to log in [HARDWARE.md](HARDWARE.md).
+**Parked.** Printed SO-101 parts and motors stay on the shelf until the CPU sim loop in [SIMULATION.md](SIMULATION.md) is green. Then follow [HARDWARE.md](HARDWARE.md).

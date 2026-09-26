@@ -16,6 +16,7 @@ from apprentice.robot.so101 import (
     find_port_cmd,
     format_cmd,
     record_cmd,
+    repo_root,
     setup_motors_cmd,
     teleop_cmd,
 )
@@ -242,6 +243,73 @@ def cmd_robot_capture_pose(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sim_demo(args: argparse.Namespace) -> int:
+    from apprentice.sim.record import record_episode
+
+    dest = Path(args.out) if args.out else repo_root() / "data" / "sim" / "skill1"
+    dest.mkdir(parents=True, exist_ok=True)
+    ok = 0
+    for i in range(args.episodes):
+        payload = record_episode(dest / f"episode_{i:03d}", seed=args.seed + i, miss=False)
+        flag = "ok" if payload["success"] else "FAIL"
+        print(f"episode {i:03d} seed={payload['seed']} {flag} frames={payload['n_frames']}")
+        ok += int(payload["success"])
+    print(f"success_rate={ok / args.episodes:.2f} dest={dest}")
+    return 0 if ok == args.episodes else 1
+
+
+def cmd_sim_eval(args: argparse.Namespace) -> int:
+    from apprentice.sim.record import evaluate
+
+    dest = Path(args.out) if args.out else repo_root() / "data" / "sim" / "eval.json"
+    summary = evaluate(
+        episodes=args.episodes,
+        start_seed=args.seed,
+        dest=dest,
+        miss_every=args.miss_every,
+    )
+    print(
+        f"episodes={summary['episodes']} successes={summary['successes']} "
+        f"success_rate={summary['success_rate']:.2f}"
+    )
+    print(f"wrote {dest}")
+    return 0 if summary["success_rate"] >= args.min_rate else 1
+
+
+def cmd_sim_factory(args: argparse.Namespace) -> int:
+    from apprentice.sim.record import domain_random_eval
+
+    dest = Path(args.out) if args.out else repo_root() / "data" / "sim" / "factory.json"
+    summary = domain_random_eval(episodes=args.episodes, start_seed=args.seed, dest=dest)
+    print(
+        f"factory episodes={summary['episodes']} "
+        f"success_rate={summary['success_rate']:.2f} wrote {dest}"
+    )
+    return 0 if summary["success_rate"] >= args.min_rate else 1
+
+
+def cmd_sim_loop(args: argparse.Namespace) -> int:
+    from apprentice.sim.loop import run_loop
+
+    dest = Path(args.out) if args.out else repo_root() / "data" / "sim" / "loop"
+    report = run_loop(
+        episodes=args.episodes,
+        dest=dest,
+        start_seed=args.seed,
+        miss_every=args.miss_every,
+        use_cosmos=args.cosmos,
+    )
+    print(f"skill={report['skill']['name']} instruction={report['skill']['language_instruction']}")
+    for row in report["rows"]:
+        geo = row["geometric"]
+        print(
+            f"episode {row['episode']:03d} success={row['success']} "
+            f"geo={geo['success']} fail={geo['failure_mode']}"
+        )
+    print(f"success_rate={report['success_rate']:.2f} report={dest / 'report.json'}")
+    return 0 if report["success_rate"] >= args.min_rate else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="apprentice", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -312,6 +380,34 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--waypoints", help="path to skill1_waypoints.json")
     _dry(p)
     p.set_defaults(func=cmd_robot_replay)
+
+    sim = sub.add_parser("sim", help="CPU tabletop sim (no hardware)")
+    ssub = sim.add_subparsers(dest="sim_command", required=True)
+
+    def _sim_common(p: argparse.ArgumentParser) -> None:
+        p.add_argument("--episodes", type=int, default=5)
+        p.add_argument("--seed", type=int, default=0)
+        p.add_argument("--out", help="output path")
+        p.add_argument("--min-rate", type=float, default=0.8, dest="min_rate")
+
+    p = ssub.add_parser("demo", help="record scripted Skill 1 episodes")
+    _sim_common(p)
+    p.set_defaults(func=cmd_sim_demo)
+
+    p = ssub.add_parser("eval", help="success-rate of the scripted expert")
+    _sim_common(p)
+    p.add_argument("--miss-every", type=int, default=0, dest="miss_every")
+    p.set_defaults(func=cmd_sim_eval)
+
+    p = ssub.add_parser("factory", help="domain-randomized eval (Cosmos stand-in)")
+    _sim_common(p)
+    p.set_defaults(func=cmd_sim_factory)
+
+    p = ssub.add_parser("loop", help="skill card + rollout + geometric critic")
+    _sim_common(p)
+    p.add_argument("--miss-every", type=int, default=0, dest="miss_every")
+    p.add_argument("--cosmos", action="store_true", help="also call Cosmos Reasoner (needs API key)")
+    p.set_defaults(func=cmd_sim_loop)
 
     return parser
 

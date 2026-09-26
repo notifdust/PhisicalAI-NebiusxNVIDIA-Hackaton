@@ -1,1 +1,5 @@
-"""Factory jobs (Cosmos SDG, Isaac eval, GR00T train) land in Phase 2."""
+"""Sim-first factory: domain-randomized eval until Cosmos Jobs exist."""
+
+from apprentice.sim.record import domain_random_eval, evaluate
+
+__all__ = ["domain_random_eval", "evaluate"]

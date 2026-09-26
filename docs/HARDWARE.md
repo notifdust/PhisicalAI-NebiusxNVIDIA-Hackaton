@@ -1,6 +1,7 @@
 # Hardware bring-up — SO-101
 
-Printed parts and motors are in hand. **Set unique motor IDs before you daisy-chain anything.** New STS3215 servos almost always ship as id=`1`. If two motors share an ID on the same bus, the arm will jerk, drop packets, or refuse to connect.
+**Deferred.** Finish the CPU sim loop in [SIMULATION.md](SIMULATION.md) before assembling the bus. Printed parts and motors can wait on the shelf. When we come back here: **set unique motor IDs before daisy-chaining.**
+
 
 Official assembly reference: [LeRobot SO-101](https://huggingface.co/docs/lerobot/en/so101). This file is the Apprentice-specific checklist: Skill 1, ports, cameras, safety, and the commands this repo prints for you.
 

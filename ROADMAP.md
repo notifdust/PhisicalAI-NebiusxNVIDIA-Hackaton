@@ -83,7 +83,8 @@ Token Factory                           Serverless Jobs                         
 
 | Platform | Role in Apprentice | When it first appears |
 | --- | --- | --- |
-| **SO-101 + LeRobot** | Body, teleop, episode format | Phase 1 |
+| **SO-101 + LeRobot** | Real body, teleop, episode format | Phase 4 (parked) |
+| **CPU tabletop sim** | Dev body: same joints, skill, cameras | Phase 1 |
 | **NVIDIA Isaac GR00T N1.7** | Vision-language-action motor skill | Phase 3 |
 | **NVIDIA Cosmos 3 Super Reasoner** (`nvidia/Cosmos3-Super-Reasoner` on Token Factory) | Physical critic: did the grasp work, what failed | Phase 0 (API), Phase 4 (closed loop) |
 | **NVIDIA Cosmos Predict / Transfer** | Multiply one demo into visual/layout variants | Phase 2 |
@@ -102,20 +103,20 @@ If a piece is dropped, the product breaks in a specific way (no body, no motor s
 
 ## 4. Calendar
 
-Today is **Monday, September 21, 2026**. There are **39 days** to the deadline.
+Today is **Saturday, September 26, 2026**. Hardware is **deferred**. Sim loop first.
 
 | Phase | Dates | Theme | Hard exit |
 | --- | --- | --- | --- |
 | **0 — Foundations** | Sep 21 – Sep 27 | Accounts, repo skeleton, Token Factory hello-world | Client is in-repo; live key still needed |
-| **1 — First metal** | Sep 28 – Oct 4 | Hardware + one recorded skill, even if ugly | ≥60 s of the real arm moving on camera |
-| **2 — Data factory** | Oct 5 – Oct 11 | Cosmos SDG + Isaac eval on Jobs/Workbench | 1 demo → N variants → eval artifact |
-| **3 — Policy** | Oct 12 – Oct 18 | GR00T post-train + deploy | Policy runs the skill in sim and at least once on metal |
-| **4 — Product** | Oct 19 – Oct 25 | Agent runtime, Tavily, teach UI, recovery | A person can teach and run without a notebook |
-| **5 — Submit** | Oct 26 – Oct 30 | Freeze, video, README, Devpost | Submission form complete **before** 10:00 am PDT Oct 30 |
-
-**Exception:** Phase 1 hardware can overlap Phase 0. If the SO-101 has not arrived by **October 4**, trigger the hardware fallback in §8 the same day. Do not wait.
+| **1 — Sim-first skill loop** | Sep 26 – Oct 8 | CPU tabletop Skill 1: demo, eval, factory, critic | Expert success rate ≥ 0.9 on 20 randomized episodes; `sim loop` writes a report |
+| **2 — Cloud factory** | Oct 8 – Oct 15 | Cosmos SDG + Isaac eval on Jobs/Workbench | 1 demo → N variants → eval artifact on Nebius |
+| **3 — Policy** | Oct 15 – Oct 20 | GR00T post-train in sim | Policy runs Skill 1 in sim |
+| **4 — Metal** | Oct 20 – Oct 25 | SO-101 IDs, calibrate, teleop, 60 s clip | ≥60 s of the real arm; at least one metal success if policy transfers |
+| **5 — Product + submit** | Oct 25 – Oct 30 | Agent runtime, Tavily, UI, video, Devpost | Submission complete **before** 10:00 am PDT Oct 30 |
 
 **Feature freeze:** October 26, 2026. After freeze, only video, docs, reliability fixes, and submission packaging.
+
+Metal is no longer allowed to block the compiler. If the arm is late, the sim loop + Jobs + video of modules still satisfy the Physical AI “key modules in action” fallback — weaker for Grand Prize, still a legal submission.
 
 ---
 
@@ -214,49 +215,38 @@ Define the JSON object that later phases pass around:
 
 ---
 
-## 6. Phase 1 — First metal (Sep 28 – Oct 4)
+## 6. Phase 1 — Sim-first skill loop (Sep 26 – Oct 8)
 
-**Goal:** One real demonstration on the arm, recorded in LeRobot format, and a 60-second hardware clip in the can. Success rate may be ugly. The clip is not optional.
+**Goal:** Skill 1 runs entirely on the CPU tabletop simulator. No USB, no motors. Same joint names, skill card, and cameras as the real arm will use.
 
-### 6.1 Bring-up
+See [docs/SIMULATION.md](docs/SIMULATION.md).
 
-- [x] Bring-up CLI + [docs/HARDWARE.md](docs/HARDWARE.md) (ID assignment **before** daisy-chain)
-- [ ] Run `apprentice robot setup-motors` on each arm (one motor on the bus at a time)
-- [ ] Assemble / calibrate leader and follower
-- [ ] Confirm camera indices (front, wrist), 640×480 @ 30 fps as a baseline
-- [ ] Safety: e-stop or unplug path, workspace walls, no people in the sweep volume during policy runs
-- [ ] Record **this machine's** ports, IDs, camera indices in `docs/HARDWARE.md`
+### 6.1 Simulator
 
-### 6.2 Data collection
+- [x] Tabletop env with SO-101 joint names, block, bowl, front + wrist cameras
+- [x] Analytic IK + scripted expert for Skill 1
+- [x] Geometric critic aligned with `SkillSpec.success`
+- [ ] Live Cosmos Reasoner on sim frames once `NEBIUS_API_KEY` exists
 
-- [ ] Teleop **Skill 1** for ≥20 episodes if time allows; **minimum 5** clean episodes to proceed
-- [ ] Language instruction on every episode: a single canonical phrase, e.g. `"put the block in the blue bowl"`
-- [ ] Save as GR00T-flavored LeRobot v2 (see Isaac GR00T `examples/SO100`)
-- [ ] Hold out 2 episodes for evaluation; never train on them
+### 6.2 Commands
 
-### 6.3 Scripted baseline (honesty check)
+- [x] `apprentice sim demo`
+- [x] `apprentice sim eval`
+- [x] `apprentice sim factory` (domain-random stand-in for Cosmos SDG)
+- [x] `apprentice sim loop` (skill card + rollout + critic report)
 
-- [x] Waypoint replay (`apprentice robot replay`) that refuses the all-zero example
-- [ ] Capture real poses into `configs/skill1_waypoints.json` and run replay on metal
+### 6.3 Exit criteria
 
-### 6.4 Capture the judging clip early
+1. `apprentice sim eval --episodes 20` success rate ≥ 0.9
+2. Injected misses (`--miss-every`) tagged `grasp_missed`
+3. `sim loop` writes `report.json` plus JPEG key frames
+4. Tests in `tests/test_sim.py` pass without hardware
 
-- [ ] Shoot a **continuous 70–90 second** take of the follower arm operating (teleop or scripted is allowed for this clip)
-- [ ] No jump cuts, no copyrighted music, well-lit table, instruction spoken on camera
-- [ ] Archive the raw file. Phase 5 will edit; Phase 1 must not “wait for the perfect policy”
-
-### Phase 1 exit criteria
-
-1. Robot can be teleoperated and recorded end to end.
-2. ≥5 LeRobot episodes of Skill 1 on disk.
-3. Raw ≥60 s hardware footage stored.
-4. `docs/HARDWARE.md` is enough for a teammate to plug in the same arm.
-
-**If the arm has not arrived by October 4:** execute §8 immediately. Phase 2 can still run in sim with a public SO-101 / Isaac dataset, but the hardware clip remains a blocker for submission quality.
+**Hardware (old Phase 1) is moved to Phase 4.** Do not start motor IDs until this phase exits. The bring-up CLI and [docs/HARDWARE.md](docs/HARDWARE.md) stay in the repo, parked.
 
 ---
 
-## 7. Phase 2 — Data factory (Oct 5 – Oct 11)
+## 7. Phase 2 — Data factory (Oct 8 – Oct 15)
 
 **Goal:** One real (or public) episode becomes many variants, evaluated in physics, on Nebius compute.
 
@@ -313,21 +303,30 @@ Define the JSON object that later phases pass around:
 ### 8.3 Evaluate
 
 - [ ] Sim: success rate on held-out layouts (factory eval job)
-- [ ] Metal: ≥10 trials of Skill 1; log success/fail. **Target for this phase: any consistent >0 success**, not 90%
-- [ ] Compare to Phase 1 scripted baseline on the same table
+- [ ] Metal (only if Phase 4 bring-up is already done): ≥10 trials. **Not a Phase 3 blocker.**
 
 ### Phase 3 exit criteria
 
 1. A named GR00T checkpoint exists and is reproducible from the README.
-2. Policy produces actions in sim.
-3. At least one uncut metal episode where the policy (not teleop) completes Skill 1.
-4. Endpoint **or** documented local GPU path is how the robot gets actions.
+2. Policy produces actions **in sim**.
+3. Endpoint **or** documented local GPU path is how actions are served.
+4. Metal success is Phase 4, not this phase.
 
 ---
 
-## 9. Phase 4 — Product (Oct 19 – Oct 25)
+## 9. Phase 4 — Metal + product (Oct 20 – Oct 25)
 
-**Goal:** A complete product experience. This is the Design criterion. Stop looking like a research repo.
+**Goal:** Plug the sim-proven loop into the SO-101, then make it a product. Do not start this phase until Phase 1 sim exit is green.
+
+### 9.0 Metal bring-up (moved here from old Phase 1)
+
+- [x] Bring-up CLI + [docs/HARDWARE.md](docs/HARDWARE.md)
+- [ ] `apprentice robot setup-motors` (one motor on the bus at a time)
+- [ ] Assemble / calibrate leader and follower
+- [ ] Cameras 640×480 @ 30 fps
+- [ ] ≥5 LeRobot episodes of Skill 1
+- [ ] Continuous ≥60 s hardware clip (teleop or replay allowed)
+- [ ] At least one policy or scripted success on metal if time allows
 
 ### 9.1 Agent runtime
 
@@ -501,10 +500,7 @@ Apprentice is done when all of the following are true:
 
 ## 15. Immediate next actions (this week)
 
-1. Order the SO-101 pair and cameras.
-2. Create Token Factory, AI Cloud, Tavily, and Hugging Face credentials.
-3. Land the Phase 0 repo skeleton and hello-world scripts on this repository.
-4. Write `docs/HACKATHON.md` with the first two successful API call IDs.
-5. Do not start UI polish, SONIC, or a second skill.
-
-When Phase 0 exit criteria are checked off, move to Phase 1 without replanning.
+1. Run `apprentice sim eval --episodes 20` and `apprentice sim loop --episodes 5`.
+2. Put a Token Factory key in `.env` and run `apprentice sim loop --cosmos`.
+3. Do **not** daisy-chain SO-101 motors until the sim loop is green.
+4. Do not start UI polish, SONIC, or a second skill.
